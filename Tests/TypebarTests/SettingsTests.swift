@@ -32,7 +32,8 @@ struct SettingsTests {
         let now = ProcessInfo.processInfo.systemUptime
         #expect(input.session.elapsed(at: now) == input.session.elapsed(at: now + 10))
         let previousFrame = panel.frame
-        settings.value.scale = 0.8
+        settings.value.scale = 0.6
+        settings.value.blurRadius = 0
         settings.value.themeID = "dracula"
         #expect(panel.frame.width < previousFrame.width)
         #expect(panel.isVisible && window.isVisible)
