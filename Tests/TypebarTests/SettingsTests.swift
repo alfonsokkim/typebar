@@ -5,6 +5,82 @@ import TypingCore
 
 @MainActor
 struct SettingsTests {
+    @Test func editingSettingsKeepsALivePreviewAndPreservesPractice() throws {
+        let application = NSApplication.shared
+        let suite = "TypebarTests.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let settings = OverlaySettings(presets: try ThemePalette.presets(), defaults: defaults)
+        let delegate = AppDelegate(vocabulary: ["hello"], settings: settings)
+        delegate.perform(NSSelectorFromString("toggleOverlay"))
+        let panel = try #require(application.windows.compactMap { $0 as? OverlayPanel }.first { $0.isVisible })
+        let input = try #require(panel.contentView?.subviews.first { $0 is TypingView } as? TypingView)
+        input.insertText("he", replacementRange: NSRange(location: NSNotFound, length: 0))
+        delegate.perform(NSSelectorFromString("showSettings"))
+        let window = try #require(application.windows.first { $0.title == "Typebar Settings" && $0.isVisible })
+        defer {
+            if window.isVisible { window.performClose(nil) }
+            panel.orderOut(nil)
+            delegate.applicationWillTerminate(Notification(name: NSApplication.willTerminateNotification))
+        }
+        #expect(panel.isVisible && window.isVisible)
+        #expect(panel.ignoresMouseEvents && !panel.canBecomeKey)
+        #expect(window.canBecomeKey && window.firstResponder !== input)
+        delegate.windowDidResignKey(Notification(name: NSWindow.didResignKeyNotification, object: panel))
+        #expect(panel.isVisible)
+        #expect(panel.level == .normal)
+        let now = ProcessInfo.processInfo.systemUptime
+        #expect(input.session.elapsed(at: now) == input.session.elapsed(at: now + 10))
+        let previousFrame = panel.frame
+        settings.value.scale = 0.8
+        settings.value.themeID = "dracula"
+        #expect(panel.frame.width < previousFrame.width)
+        #expect(panel.isVisible && window.isVisible)
+        #expect(!panel.canBecomeKey && window.firstResponder !== input)
+        #expect(input.palette.id == "dracula")
+        #expect(input.session.words[input.session.currentIndex].input == "he")
+        let changedFrame = panel.frame
+        delegate.perform(NSSelectorFromString("showSettings"))
+        #expect(panel.frame == changedFrame)
+        window.performClose(nil)
+        #expect(!window.isVisible && panel.isVisible)
+        #expect(!panel.ignoresMouseEvents && panel.canBecomeKey)
+        #expect(panel.firstResponder === input)
+        delegate.windowDidResignKey(Notification(name: NSWindow.didResignKeyNotification, object: window))
+        #expect(panel.isVisible)
+        #expect(panel.level == .floating)
+        #expect(input.session.words[input.session.currentIndex].input == "he")
+        delegate.perform(NSSelectorFromString("toggleOverlay"))
+        #expect(!panel.isVisible)
+        delegate.perform(NSSelectorFromString("showSettings"))
+        #expect(panel.isVisible && window.isVisible)
+        #expect(panel.ignoresMouseEvents && window.canBecomeKey)
+    }
+
+    @Test func settingsOpenLowAndLeaveRoomForTheDefaultPreview() {
+        for display in [CGRect(x: 0, y: 35, width: 1800, height: 1134),
+                        CGRect(x: -1440, y: 100, width: 1440, height: 875)] {
+            let preview = OverlayLayout.resolve(in: display, preferences: OverlayPreferences()).frame
+            let settings = SettingsWindow.initialFrame(in: display, previewFrame: preview)
+            #expect(display.contains(settings))
+            #expect(settings.minY == display.minY + 12)
+            #expect(settings.midX == display.midX)
+            #expect(settings.maxY <= preview.minY - 12)
+        }
+    }
+
+    @Test func previewCannotTakeKeyboardFocusWhileSettingsAreBeingEdited() {
+        _ = NSApplication.shared
+        let panel = OverlayPanel(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel],
+                                 backing: .buffered, defer: false)
+        panel.isReleasedWhenClosed = false
+        #expect(panel.canBecomeKey)
+        panel.ignoresMouseEvents = true
+        #expect(!panel.canBecomeKey)
+        panel.ignoresMouseEvents = false
+        #expect(panel.canBecomeKey)
+    }
+
     @Test func wideGamutCustomColoursStayValidAfterConversion() {
         let colour = NSColor(colorSpace: .extendedSRGB, components: [1.2, -0.1, 0.5, 1], count: 4)
         #expect(colour.themeHex == "#FF0080")

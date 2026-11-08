@@ -3,7 +3,7 @@ import ApplicationServices
 import TypingCore
 
 final class OverlayPanel: NSPanel {
-    override var canBecomeKey: Bool { true }
+    override var canBecomeKey: Bool { !ignoresMouseEvents }
     override var canBecomeMain: Bool { false }
 }
 
@@ -46,12 +46,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var settings: OverlaySettings?
     private var settingsWindow: SettingsWindow?
     private var backdropView: ShadowBackdropView?
+    private var isEditingAppearance = false
+    private var settingsPreviewScreen: NSScreen?
+
+    init(vocabulary: [String] = [], settings: OverlaySettings? = nil) {
+        self.vocabulary = vocabulary
+        self.settings = settings
+        super.init()
+        observeSettings()
+    }
+
+    private func observeSettings() {
+        settings?.onChange = { [weak self] in
+            guard let self else { return }
+            self.applySettings(on: self.settingsPreviewScreen)
+        }
+    }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         do {
             vocabulary = try EnglishWords.load()
             settings = OverlaySettings(presets: try ThemePalette.presets())
-            settings?.onChange = { [weak self] in self?.applySettings() }
+            observeSettings()
         }
         catch {
             let alert = NSAlert()
@@ -142,11 +158,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     @objc private func toggleOverlay() {
+        if isEditingAppearance { settingsWindow?.window?.performClose(nil); return }
         if panel?.isVisible == true { hideOverlay(restoreFocus: true) }
         else { showOverlay() }
     }
 
-    private func showOverlay() {
+    private func showOverlay(on requestedScreen: NSScreen? = nil) {
+        if isEditingAppearance { settingsWindow?.window?.performClose(nil); return }
         if panel == nil { createPanel() }
         guard let panel, let typingView else { return }
         if !panel.isVisible {
@@ -154,7 +172,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             if frontmost?.processIdentifier != ProcessInfo.processInfo.processIdentifier { previousApplication = frontmost }
         }
         let point = NSEvent.mouseLocation
-        let screen = NSScreen.screens.first { $0.frame.contains(point) } ?? NSScreen.main
+        let screen = requestedScreen ?? NSScreen.screens.first { $0.frame.contains(point) } ?? NSScreen.main
         applySettings(on: screen)
         typingView.session.resume(at: ProcessInfo.processInfo.systemUptime)
         typingView.settleCaret()
@@ -184,12 +202,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     @objc private func showSettings() {
         guard let settings else { return }
-        hideOverlay(restoreFocus: false)
-        if settingsWindow == nil {
-            settingsWindow = SettingsWindow(settings: settings, showOverlay: { [weak self] in self?.showOverlay() })
+        if isEditingAppearance {
+            settingsWindow?.showWindow(nil)
+            NSApplication.shared.activate(ignoringOtherApps: true)
+            return
         }
+        if panel == nil { createPanel() }
+        guard let panel else { return }
+        let frontmost = NSWorkspace.shared.frontmostApplication
+        if frontmost?.processIdentifier != ProcessInfo.processInfo.processIdentifier { previousApplication = frontmost }
+        let point = NSEvent.mouseLocation
+        let screen = (panel.isVisible ? panel.screen : nil)
+            ?? NSScreen.screens.first { $0.frame.contains(point) } ?? NSScreen.main
+        isEditingAppearance = true
+        settingsPreviewScreen = screen
+        typingView?.session.pause(at: ProcessInfo.processInfo.systemUptime)
+        typingView?.settleCaret()
+        updateTimer?.invalidate()
+        updateTimer = nil
+        panel.ignoresMouseEvents = true
+        panel.level = .normal
+        applySettings(on: screen)
+        panel.orderFront(nil)
+        if settingsWindow == nil {
+            settingsWindow = SettingsWindow(settings: settings)
+            settingsWindow?.window?.delegate = self
+        }
+        if let screen { settingsWindow?.positionNearBottom(on: screen, previewFrame: panel.frame) }
         settingsWindow?.showWindow(nil)
         NSApplication.shared.activate(ignoringOtherApps: true)
+        settingsWindow?.window?.makeKeyAndOrderFront(nil)
+        if let window = settingsWindow?.window { panel.order(.below, relativeTo: window.windowNumber) }
     }
 
     private func hideOverlay(restoreFocus: Bool) {
@@ -206,13 +249,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         hiding = false
     }
 
-    func windowDidResignKey(_ notification: Notification) { hideOverlay(restoreFocus: false) }
+    func windowDidResignKey(_ notification: Notification) {
+        guard notification.object as? NSWindow === panel, !isEditingAppearance else { return }
+        hideOverlay(restoreFocus: false)
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        guard notification.object as? NSWindow === settingsWindow?.window, isEditingAppearance else { return }
+        let screen = settingsPreviewScreen
+        isEditingAppearance = false
+        settingsPreviewScreen = nil
+        panel?.ignoresMouseEvents = false
+        panel?.level = .floating
+        showOverlay(on: screen)
+    }
 
     @objc private func restartSession() {
         typingView?.session = TypingSession(vocabulary: vocabulary)
         typingView?.settleCaret()
         typingView?.refreshAccessibility()
-        panel?.makeFirstResponder(typingView)
+        if !isEditingAppearance { panel?.makeFirstResponder(typingView) }
     }
 
     private func installLocalMonitor() {

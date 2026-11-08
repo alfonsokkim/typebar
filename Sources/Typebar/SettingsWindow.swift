@@ -3,25 +3,35 @@ import SwiftUI
 import TypingCore
 
 final class SettingsWindow: NSWindowController {
-    init(settings: OverlaySettings, showOverlay: @escaping () -> Void) {
-        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 580, height: 730),
+    init(settings: OverlaySettings) {
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 580, height: 500),
                               styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
         window.title = "Typebar Settings"
-        window.minSize = NSSize(width: 520, height: 580)
+        window.minSize = NSSize(width: 520, height: 360)
         window.isReleasedWhenClosed = false
         super.init(window: window)
-        window.contentView = NSHostingView(rootView: SettingsForm(settings: settings, preview: { [weak window] in
-            window?.orderOut(nil)
-            showOverlay()
+        window.contentView = NSHostingView(rootView: SettingsForm(settings: settings, done: { [weak window] in
+            window?.performClose(nil)
         }))
-        window.center()
     }
     required init?(coder: NSCoder) { return nil }
+
+    static func initialFrame(in visibleFrame: CGRect, previewFrame: CGRect) -> CGRect {
+        let available = visibleFrame.insetBy(dx: 12, dy: 12)
+        let spaceBelowPreview = previewFrame.minY - available.minY - 12
+        let height = min(528, max(360, spaceBelowPreview), available.height)
+        let size = CGSize(width: min(580, available.width), height: height)
+        return CGRect(x: available.midX - size.width / 2, y: available.minY, width: size.width, height: size.height)
+    }
+
+    func positionNearBottom(on screen: NSScreen, previewFrame: CGRect) {
+        window?.setFrame(Self.initialFrame(in: screen.visibleFrame, previewFrame: previewFrame), display: false)
+    }
 }
 
 private struct SettingsForm: View {
     @Bindable var settings: OverlaySettings
-    let preview: () -> Void
+    let done: () -> Void
 
     var body: some View {
         VStack(spacing: 0) {
@@ -31,15 +41,6 @@ private struct SettingsForm: View {
                         ForEach(settings.presets, id: \.id) { Text($0.name).tag($0.id) }
                         Text("Custom").tag("custom")
                     }
-                    HStack(spacing: 10) {
-                        Text("the quick brown fox").font(.system(size: 18, design: .monospaced))
-                            .foregroundStyle(Color(nsColor: NSColor(themeHex: settings.palette.text)))
-                        Text("75 wpm").monospacedDigit().foregroundStyle(Color(nsColor: NSColor(themeHex: settings.palette.accent)))
-                    }
-                    .padding(14)
-                    .frame(maxWidth: .infinity)
-                    .background(Color(nsColor: NSColor(themeHex: settings.palette.background)))
-                    .clipShape(RoundedRectangle(cornerRadius: min(16, settings.value.cornerRadius)))
                     if settings.value.themeID == "custom" {
                         ColorPicker("Background", selection: colour(\.background), supportsOpacity: false)
                         ColorPicker("Typed text", selection: colour(\.text), supportsOpacity: false)
@@ -57,7 +58,7 @@ private struct SettingsForm: View {
                     slider("Background opacity", $settings.value.backgroundOpacity, in: 0.2...1, percentage: true)
                     slider("Overall opacity", $settings.value.contentOpacity, in: 0.4...1, percentage: true)
                 }
-                Section("Position on the display under your pointer") {
+                Section("Position on this display") {
                     Picker("Placement", selection: placement) {
                         ForEach(Array(Self.placements.enumerated()), id: \.offset) { index, item in Text(item.0).tag(index) }
                         Text("Custom position").tag(-1)
@@ -72,8 +73,8 @@ private struct SettingsForm: View {
                 Button("Reset Defaults") { settings.value = OverlayPreferences() }
                     .accessibilityLabel("Reset Defaults")
                 Spacer()
-                Button("Show Overlay", action: preview).keyboardShortcut(.defaultAction)
-                    .accessibilityLabel("Show Overlay")
+                Button("Done", action: done).keyboardShortcut(.defaultAction)
+                    .accessibilityLabel("Done")
             }
             .padding(16)
         }
