@@ -2,7 +2,7 @@
 
 A small typing-practice overlay for macOS. Press and release **Control + Option + Command** to bring up two ten-word lines near the top of your screen, then keep typing for as long as you like.
 
-[Download for Mac](https://github.com/alfonsokkim/typebar/releases/latest/download/Typebar-mac.zip) · [Releases](https://github.com/alfonsokkim/typebar/releases) · [akwas](https://akwas.vercel.app)
+[Download for Mac](https://akwas.vercel.app/downloads/typebar/Typebar-mac.zip) · [Releases](https://github.com/alfonsokkim/typebar/releases) · [akwas](https://akwas.vercel.app)
 
 ![Typebar at its default size on a full desktop](docs/desktop.jpg)
 
@@ -26,7 +26,7 @@ The first image is a full-screen capture with the native overlay at its default 
 
 Requires **macOS 14 or later**. The download is a universal app containing Apple Silicon and Intel builds. Runtime checks have been performed on Apple Silicon.
 
-1. [Download Typebar-mac.zip](https://github.com/alfonsokkim/typebar/releases/latest/download/Typebar-mac.zip) and unzip it.
+1. [Download Typebar-mac.zip](https://akwas.vercel.app/downloads/typebar/Typebar-mac.zip) and unzip it.
 2. Drag **Typebar.app** into **Applications**, then open it.
 3. If macOS blocks the first launch, open **System Settings → Privacy & Security**, choose **Open Anyway** for Typebar, and confirm. This build is locally signed and is not notarized by Apple.
 4. Enable **Typebar** under **System Settings → Privacy & Security → Accessibility** so its global shortcut works. The menu-bar button also opens the overlay.
