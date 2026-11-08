@@ -1,0 +1,28 @@
+name: Build Mac app
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Test
+        run: swift test
+      - name: Package universal Mac app
+        run: ./scripts/package-release.sh
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: Typebar-mac
+          path: |
+            dist/Typebar-mac.zip
+            dist/SHA256SUMS.txt

@@ -1,0 +1,56 @@
+[
+  {
+    "id": "serika_dark",
+    "name": "Serika Dark",
+    "background": "#323437",
+    "text": "#d1d0c5",
+    "muted": "#646669",
+    "accent": "#e2b714",
+    "error": "#ca4754"
+  },
+  {
+    "id": "serika",
+    "name": "Serika",
+    "background": "#e1e1e3",
+    "text": "#323437",
+    "muted": "#aaaeb3",
+    "accent": "#e2b714",
+    "error": "#da3333"
+  },
+  {
+    "id": "carbon",
+    "name": "Carbon",
+    "background": "#313131",
+    "text": "#f5e6c8",
+    "muted": "#616161",
+    "accent": "#f66e0d",
+    "error": "#e72d2d"
+  },
+  {
+    "id": "dracula",
+    "name": "Dracula",
+    "background": "#282a36",
+    "text": "#f8f8f2",
+    "muted": "#6272a4",
+    "accent": "#bd93f9",
+    "error": "#ff5555"
+  },
+  {
+    "id": "nord",
+    "name": "Nord",
+    "background": "#242933",
+    "text": "#d8dee9",
+    "muted": "#929aaa",
+    "accent": "#88c0d0",
+    "error": "#bf616a"
+  },
+  {
+    "id": "catppuccin",
+    "name": "Catppuccin",
+    "background": "#1e1e2e",
+    "text": "#cdd6f4",
+    "muted": "#7f849c",
+    "accent": "#cba6f7",
+    "error": "#f38ba8"
+  }
+]
