@@ -58,13 +58,13 @@ struct SettingsTests {
         #expect(panel.ignoresMouseEvents && window.canBecomeKey)
     }
 
-    @Test func settingsOpenLowAndLeaveRoomForTheDefaultPreview() {
+    @Test func settingsAreCentredBetweenThePreviewAndDisplayBottom() {
         for display in [CGRect(x: 0, y: 35, width: 1800, height: 1134),
                         CGRect(x: -1440, y: 100, width: 1440, height: 875)] {
             let preview = OverlayLayout.resolve(in: display, preferences: OverlayPreferences()).frame
             let settings = SettingsWindow.initialFrame(in: display, previewFrame: preview)
             #expect(display.contains(settings))
-            #expect(settings.minY == display.minY + 12)
+            #expect(settings.midY == (display.minY + preview.minY) / 2)
             #expect(settings.midX == display.midX)
             #expect(settings.maxY <= preview.minY - 12)
         }

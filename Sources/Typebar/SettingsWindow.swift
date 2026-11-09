@@ -21,10 +21,12 @@ final class SettingsWindow: NSWindowController {
         let spaceBelowPreview = previewFrame.minY - available.minY - 12
         let height = min(528, max(360, spaceBelowPreview), available.height)
         let size = CGSize(width: min(580, available.width), height: height)
-        return CGRect(x: available.midX - size.width / 2, y: available.minY, width: size.width, height: size.height)
+        let centredY = (visibleFrame.minY + previewFrame.minY - height) / 2
+        let y = min(available.maxY - height, max(available.minY, centredY))
+        return CGRect(x: available.midX - size.width / 2, y: y, width: size.width, height: size.height)
     }
 
-    func positionNearBottom(on screen: NSScreen, previewFrame: CGRect) {
+    func positionBelowPreview(on screen: NSScreen, previewFrame: CGRect) {
         window?.setFrame(Self.initialFrame(in: screen.visibleFrame, previewFrame: previewFrame), display: false)
     }
 }

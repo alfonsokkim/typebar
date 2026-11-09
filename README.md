@@ -59,7 +59,7 @@ Click the **gear** in the overlay, choose **Settings…** from the a│ menu, or
 - **Opacity:** adjust the background separately from the overall overlay.
 - **Position:** choose one of nine placements, or use the horizontal and vertical sliders. Placement is relative to the display under your pointer when you open the overlay.
 
-Settings open near the bottom of the display, with the actual overlay staying visible at its configured position. Changes update it immediately while the typing clock is paused. Settings save automatically on this Mac. **Done** closes settings and returns keyboard focus to the overlay without clearing your practice. **Reset Defaults** restores Shadow and the original layout. On smaller displays, Typebar reduces the effective size or blur as needed to keep the complete overlay on-screen.
+Settings open centred in the space between the overlay and the bottom of the display, with the actual overlay staying visible at its configured position. Changes update it immediately while the typing clock is paused. Settings save automatically on this Mac. **Done** closes settings and returns keyboard focus to the overlay without clearing your practice. **Reset Defaults** restores Shadow and the original layout. On smaller displays, Typebar reduces the effective size or blur as needed to keep the complete overlay on-screen.
 
 ## WPM and accuracy
 

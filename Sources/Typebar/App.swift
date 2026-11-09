@@ -228,7 +228,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             settingsWindow = SettingsWindow(settings: settings)
             settingsWindow?.window?.delegate = self
         }
-        if let screen { settingsWindow?.positionNearBottom(on: screen, previewFrame: panel.frame) }
+        if let screen { settingsWindow?.positionBelowPreview(on: screen, previewFrame: panel.frame) }
         settingsWindow?.showWindow(nil)
         NSApplication.shared.activate(ignoringOtherApps: true)
         settingsWindow?.window?.makeKeyAndOrderFront(nil)
