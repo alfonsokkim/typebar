@@ -91,13 +91,34 @@ swift test
 open dist/Typebar.app
 ```
 
-Build a universal release ZIP and its checksum:
+Build a universal development ZIP and its checksum:
 
 ```sh
+./scripts/package-release.sh --development
+```
+
+The output is `dist/Typebar-development.zip` and `dist/SHA256SUMS-development.txt`.
+This is locally signed and is not a notarized public release. CI produces this
+development artifact without access to distribution credentials.
+
+To prepare a public release, install a **Developer ID Application** certificate
+and save notarization credentials using `xcrun notarytool store-credentials`.
+Keep the private key and credentials outside the repository. Then run:
+
+```sh
+export TYPEBAR_SIGN_IDENTITY='Developer ID Application: Your Name (TEAMID)'
+export TYPEBAR_NOTARY_PROFILE='typebar-notary'
 ./scripts/package-release.sh
 ```
 
-The output is `dist/Typebar-mac.zip` and `dist/SHA256SUMS.txt`. Reproduce the close-up images with:
+Public packaging requires both credentials. It signs with hardened runtime and
+a secure timestamp, submits to Apple, requires an accepted notarization result,
+staples the ticket to the app, and checks Gatekeeper acceptance before creating
+`dist/Typebar-mac.zip` and `dist/SHA256SUMS.txt`. An Apple Development certificate
+cannot be used for this release. The notary result is saved in
+`dist/notary-result.json`; rejected submissions also save `dist/notary-log.json`.
+
+Reproduce the close-up images with:
 
 ```sh
 dist/Typebar.app/Contents/MacOS/Typebar --capture-previews docs

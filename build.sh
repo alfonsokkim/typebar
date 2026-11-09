@@ -27,13 +27,23 @@ cat > "$app/Contents/Info.plist" <<'PLIST'
 <key>CFBundleExecutable</key><string>Typebar</string>
 <key>CFBundleIconFile</key><string>Typebar.icns</string>
 <key>CFBundlePackageType</key><string>APPL</string>
-<key>CFBundleShortVersionString</key><string>1.3.0</string>
-<key>CFBundleVersion</key><string>11</string>
+<key>CFBundleShortVersionString</key><string>1.3.1</string>
+<key>CFBundleVersion</key><string>12</string>
 <key>LSMinimumSystemVersion</key><string>14.0</string>
 <key>LSUIElement</key><true/>
 <key>NSHighResolutionCapable</key><true/>
 <key>NSAccessibilityUsageDescription</key><string>Typebar detects the Control, Option, and Command shortcut so you can open the typing overlay from any app.</string>
 </dict></plist>
 PLIST
-codesign --force --sign - --identifier com.alfonsokim.typebar --requirements '=designated => identifier "com.alfonsokim.typebar"' "$app"
+if [[ -n "${TYPEBAR_SIGN_IDENTITY:-}" ]]; then
+    codesign --force --sign "$TYPEBAR_SIGN_IDENTITY" --options runtime --timestamp "$app"
+    signature=$(codesign --display --verbose=4 "$app" 2>&1)
+    if ! print -r -- "$signature" | grep -q '^Authority=Developer ID Application:'; then
+        print -u2 'Distribution requires a Developer ID Application certificate.'
+        exit 1
+    fi
+else
+    codesign --force --sign - --identifier com.alfonsokim.typebar --requirements '=designated => identifier "com.alfonsokim.typebar"' "$app"
+fi
+codesign --verify --deep --strict "$app"
 print "$app"

@@ -18,11 +18,11 @@ jobs:
           persist-credentials: false
       - name: Test
         run: swift test
-      - name: Package universal Mac app
-        run: ./scripts/package-release.sh
+      - name: Package universal development app
+        run: ./scripts/package-release.sh --development
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: Typebar-mac
+          name: Typebar-development
           path: |
-            dist/Typebar-mac.zip
-            dist/SHA256SUMS.txt
+            dist/Typebar-development.zip
+            dist/SHA256SUMS-development.txt
