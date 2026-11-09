@@ -10,7 +10,7 @@ A small typing-practice overlay for macOS. Press and release **Control + Option 
 
 - Uses Monkeytype's English 200 word list, bundled for offline practice. The word “I” accepts both `I` and `i`.
 - Replaces each completed ten-word line with another. There is no test timer or finish screen.
-- Shows live WPM and accuracy, with theme colours for correct letters, mistakes, and the caret.
+- Shows live WPM and accuracy, plus a compact chart that adds a point for each completed word. The chart uses the theme accent colour and only numbers on its left axis. Theme colours also distinguish correct letters, mistakes, and the caret.
 - Resets WPM after more than **five seconds without typing**. The next keystroke starts a fresh speed measurement while keeping your words and position.
 - Moves the caret with a quick **110 ms** glide, respecting macOS Reduce Motion.
 - Sits over other apps on the display containing your pointer, with a translucent dark background and softly fading edges.
@@ -74,6 +74,8 @@ Modifier-only shortcuts toggle when you release all their modifiers, provided no
 WPM uses five characters per standard word, including spaces. Correct completed words and matching characters in the current word contribute to the calculation. Incorrect completed words do not count. Backspace corrections can reduce the current score.
 
 The clock starts on your first keystroke. Short pauses while the overlay is visible count toward your speed. After more than five seconds idle, speed resets to zero and starts fresh on the next keystroke. Characters typed before that break are excluded from the new measurement. Accuracy covers the whole practice session and is reset with Tab.
+
+The header chart records the WPM counter after each word is submitted with Space, including words with mistakes. It shows the latest 60 completed words, removes a point if you reopen that word with Backspace, and clears with the five-second idle reset or a fresh session. Short hidden pauses preserve it. It is kept only in memory.
 
 ## Privacy
 

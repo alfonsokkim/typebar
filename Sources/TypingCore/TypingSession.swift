@@ -41,14 +41,21 @@ struct WordFeed {
     }
 }
 
+public struct WPMSample: Equatable, Sendable {
+    public let completedWord: Int
+    public let wpm: Int
+}
+
 public struct TypingSession {
     public static let wordsPerLine = 10
     public static let idleResetInterval: TimeInterval = 5
+    public static let historyLimit = 60
     public private(set) var words: [PracticeWord] = []
     public private(set) var currentIndex = 0
     public private(set) var completedWords = 0
     public private(set) var totalKeystrokes = 0
     public private(set) var correctKeystrokes = 0
+    public private(set) var wpmHistory: [WPMSample] = []
     private var creditedCharacters = 0
     private var feed: WordFeed
     private var accumulatedTime: TimeInterval = 0
@@ -82,6 +89,8 @@ public struct TypingSession {
                 currentIndex = 0
                 refill()
             }
+            wpmHistory.append(WPMSample(completedWord: completedWords, wpm: wpm(at: time)))
+            if wpmHistory.count > Self.historyLimit { wpmHistory.removeFirst(wpmHistory.count - Self.historyLimit) }
         } else {
             guard words[currentIndex].input.count < 32 else { return }
             recordInput(at: time)
@@ -101,6 +110,7 @@ public struct TypingSession {
         } else if currentIndex > 0 {
             currentIndex -= 1
             completedWords -= 1
+            while let sample = wpmHistory.last, sample.completedWord > completedWords { wpmHistory.removeLast() }
             if words[currentIndex].isCorrect { creditedCharacters -= words[currentIndex].target.count + 1 }
             words[currentIndex].completed = false
         }
@@ -133,6 +143,7 @@ public struct TypingSession {
         activeSince = nil
         hasStarted = false
         self.lastInputAt = nil
+        wpmHistory.removeAll(keepingCapacity: true)
     }
 
     public func elapsed(at time: TimeInterval) -> TimeInterval {

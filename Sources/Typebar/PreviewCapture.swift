@@ -77,6 +77,7 @@ enum PreviewCapture {
                     view.session.type(char, at: time); time += step
                 }
             }
+            view.refreshAccessibility()
             overlay.addSubview(view)
             canvas.addSubview(overlay)
             window.contentView = canvas

@@ -2,7 +2,13 @@ import AppKit
 import TypingCore
 
 final class TypingView: NSView, NSTextInputClient {
-    var session: TypingSession
+    var session: TypingSession {
+        didSet {
+            chart.samples = session.wpmHistory
+            needsLayout = true
+            needsDisplay = true
+        }
+    }
     var onHide: (() -> Void)?
     var onRestart: (() -> Void)?
     var onSettings: (() -> Void)?
@@ -13,6 +19,7 @@ final class TypingView: NSView, NSTextInputClient {
             caretLayer.backgroundColor = NSColor(themeHex: palette.accent).cgColor
             CATransaction.commit()
             for button in [settingsButton, resetButton, hideButton] { button.contentTintColor = NSColor(themeHex: palette.muted) }
+            chart.palette = palette
             needsDisplay = true
         }
     }
@@ -23,6 +30,7 @@ final class TypingView: NSView, NSTextInputClient {
     private let resetButton = NSButton()
     private let hideButton = NSButton()
     private let settingsButton = NSButton()
+    private let chart = WPMChartView(frame: .zero)
     override var isFlipped: Bool { true }
     override var isOpaque: Bool { false }
     override var acceptsFirstResponder: Bool { true }
@@ -40,6 +48,7 @@ final class TypingView: NSView, NSTextInputClient {
         layer?.addSublayer(caretLayer)
         NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(accessibilityOptionsChanged),
             name: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification, object: nil)
+        addSubview(chart)
         setAccessibilityElement(true)
         setAccessibilityRole(.textArea)
         setAccessibilityLabel("Typing practice")
@@ -65,6 +74,11 @@ final class TypingView: NSView, NSTextInputClient {
 
     override func layout() {
         super.layout()
+        let speed = session.wpm(at: ProcessInfo.processInfo.systemUptime)
+        let width = ("\(speed) wpm" as NSString).size(withAttributes: [
+            .font: NSFont.monospacedDigitSystemFont(ofSize: 20, weight: .medium)
+        ]).width
+        chart.frame = NSRect(x: 150, y: 8, width: max(0, bounds.width - 128 - width - 24 - 150), height: 40)
         resetButton.frame = NSRect(x: bounds.width - 70, y: 17, width: 24, height: 24)
         hideButton.frame = NSRect(x: bounds.width - 39, y: 17, width: 24, height: 24)
         settingsButton.frame = NSRect(x: bounds.width - 101, y: 17, width: 24, height: 24)
@@ -165,6 +179,7 @@ final class TypingView: NSView, NSTextInputClient {
     func refreshAccessibility() {
         session.resetSpeedIfIdle(at: ProcessInfo.processInfo.systemUptime)
         let current = session.words[session.currentIndex]
+        needsLayout = true
         setAccessibilityValue("\(session.completedWords) words completed. Current word: \(current.target). Typed: \(current.input). \(session.wpm(at: ProcessInfo.processInfo.systemUptime)) words per minute.")
         needsDisplay = true
     }
