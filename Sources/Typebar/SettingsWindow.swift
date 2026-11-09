@@ -38,6 +38,19 @@ private struct SettingsForm: View {
     var body: some View {
         VStack(spacing: 0) {
             Form {
+                Section("Shortcut") {
+                    HStack {
+                        Text("Show / hide overlay")
+                        Spacer()
+                        ShortcutRecorder(settings: settings).frame(width: 190, height: 28)
+                        Button("Reset") { settings.isRecordingShortcut = false; settings.changeShortcut(.default) }
+                    }
+                    Text("Click the shortcut, then press modifiers alone or a key combination. Escape cancels.")
+                        .font(.caption).foregroundStyle(.secondary)
+                    if let error = settings.shortcutError {
+                        Text(error).font(.caption).foregroundStyle(.red)
+                    }
+                }
                 Section("Theme") {
                     Picker("Colours", selection: $settings.value.themeID) {
                         ForEach(settings.presets, id: \.id) { Text($0.name).tag($0.id) }
@@ -57,8 +70,8 @@ private struct SettingsForm: View {
                     slider("Edge blur", $settings.value.blurRadius, in: 0...60)
                     Text("Set edge blur to 0 for a hard edge, or increase it for a softer shadow.")
                         .font(.caption).foregroundStyle(.secondary)
-                    slider("Background opacity", $settings.value.backgroundOpacity, in: 0.2...1, percentage: true)
-                    slider("Overall opacity", $settings.value.contentOpacity, in: 0.4...1, percentage: true)
+                    slider("Background opacity", $settings.value.backgroundOpacity, in: 0...1, percentage: true)
+                    slider("Text opacity", $settings.value.textOpacity, in: 0...1, percentage: true)
                 }
                 Section("Position on this display") {
                     Picker("Placement", selection: placement) {
@@ -72,7 +85,11 @@ private struct SettingsForm: View {
             .formStyle(.grouped)
             Divider()
             HStack {
-                Button("Reset Defaults") { settings.value = OverlayPreferences() }
+                Button("Reset Defaults") {
+                    settings.isRecordingShortcut = false
+                    settings.shortcutError = nil
+                    settings.value = OverlayPreferences()
+                }
                     .accessibilityLabel("Reset Defaults")
                 Spacer()
                 Button("Done", action: done).keyboardShortcut(.defaultAction)

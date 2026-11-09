@@ -15,7 +15,10 @@ public struct PracticeWord: Sendable {
     public let target: String
     public var input = ""
     public var completed = false
-    public var isCorrect: Bool { input == target }
+    public var isCorrect: Bool { input == target || (target == "I" && input == "i") }
+    public func matchesInput(_ actual: Character, expected: Character) -> Bool {
+        actual == expected || (target == "I" && actual == "i" && expected == "I")
+    }
 }
 
 struct WordFeed {
@@ -85,7 +88,7 @@ public struct TypingSession {
             let index = words[currentIndex].input.count
             let target = Array(words[currentIndex].target)
             totalKeystrokes += 1
-            if index < target.count, target[index] == character { correctKeystrokes += 1 }
+            if index < target.count, words[currentIndex].matchesInput(character, expected: target[index]) { correctKeystrokes += 1 }
             words[currentIndex].input.append(character)
         }
     }
@@ -150,7 +153,7 @@ public struct TypingSession {
 
     private var correctCharacters: Int {
         let current = words[currentIndex]
-        let matching = current.completed ? 0 : zip(current.input, current.target).filter { $0 == $1 }.count
+        let matching = current.completed ? 0 : zip(current.input, current.target).filter { current.matchesInput($0, expected: $1) }.count
         return creditedCharacters + matching
     }
 

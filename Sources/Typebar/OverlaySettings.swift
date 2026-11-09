@@ -22,6 +22,18 @@ final class OverlaySettings {
     let presets: [ThemePalette]
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored var onChange: (() -> Void)?
+    @ObservationIgnored var onRecordingChange: (() -> Void)?
+    @ObservationIgnored var shortcutValidator: ((OverlayShortcut) -> String?)?
+    var isRecordingShortcut = false { didSet { if oldValue != isRecordingShortcut { onRecordingChange?() } } }
+    var shortcutError: String?
+
+    func changeShortcut(_ shortcut: OverlayShortcut) {
+        guard shortcut.isValid else { shortcutError = "Use Control, Option, or Command with a key, or choose a function key."; return }
+        if let error = shortcutValidator?(shortcut) { shortcutError = error; return }
+        shortcutError = nil
+        value.shortcut = shortcut
+    }
+
     var value: OverlayPreferences {
         didSet {
             if let data = try? JSONEncoder().encode(value.validated()) { defaults.set(data, forKey: "overlayPreferences") }

@@ -40,6 +40,15 @@ struct SettingsTests {
         #expect(!panel.canBecomeKey && window.firstResponder !== input)
         #expect(input.palette.id == "dracula")
         #expect(input.session.words[input.session.currentIndex].input == "he")
+        let backdrop = try #require(panel.contentView as? ShadowBackdropView)
+        settings.value.backgroundOpacity = 0.3
+        settings.value.textOpacity = 0.8
+        #expect(panel.alphaValue == 1 && input.alphaValue == 0.8)
+        #expect(backdrop.configuration.backgroundOpacity == 0.3)
+        settings.value.textOpacity = 0.4
+        #expect(input.alphaValue == 0.4 && backdrop.configuration.backgroundOpacity == 0.3)
+        settings.value.backgroundOpacity = 0.9
+        #expect(input.alphaValue == 0.4 && backdrop.configuration.backgroundOpacity == 0.9)
         let changedFrame = panel.frame
         delegate.perform(NSSelectorFromString("showSettings"))
         #expect(panel.frame == changedFrame)

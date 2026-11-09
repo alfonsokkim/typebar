@@ -107,7 +107,7 @@ final class TypingView: NSView, NSTextInputClient {
                 let character = offset < target.count ? target[offset] : input[offset]
                 let color: NSColor
                 if offset < input.count {
-                    color = offset < target.count && input[offset] == target[offset]
+                    color = offset < target.count && word.matchesInput(input[offset], expected: target[offset])
                         ? NSColor(themeHex: palette.text)
                         : NSColor(themeHex: palette.error)
                 } else if word.completed {

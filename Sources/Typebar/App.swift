@@ -48,6 +48,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var backdropView: ShadowBackdropView?
     private var isEditingAppearance = false
     private var settingsPreviewScreen: NSScreen?
+    private let hotKey = GlobalHotKey()
+    private var appliedShortcut: OverlayShortcut?
+    private var shortcutMonitoringEnabled = false
+    private var shortcutItem: NSMenuItem?
 
     init(vocabulary: [String] = [], settings: OverlaySettings? = nil) {
         self.vocabulary = vocabulary
@@ -60,7 +64,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         settings?.onChange = { [weak self] in
             guard let self else { return }
             self.applySettings(on: self.settingsPreviewScreen)
+            self.synchronizeShortcut()
         }
+        settings?.onRecordingChange = { [weak self] in self?.synchronizeShortcut(force: true) }
+        settings?.shortcutValidator = { [weak self] candidate in self?.validateShortcut(candidate) }
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -79,7 +86,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
         createMenu()
         installLocalMonitor()
-        refreshGlobalMonitor()
+        shortcutMonitoringEnabled = true
+        synchronizeShortcut(force: true)
         permissionTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated {
                 guard let self else { return }
@@ -88,7 +96,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             }
         }
         showOverlay()
-        if !AXIsProcessTrusted() { requestPermission() }
+        if settings?.value.shortcut.keyCode == nil, !AXIsProcessTrusted() { requestPermission() }
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
@@ -115,6 +123,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         menu.addItem(preferences)
         let shortcut = NSMenuItem(title: "Toggle: ⌃⌥⌘ (press and release)", action: nil, keyEquivalent: "")
         menu.addItem(shortcut)
+        shortcutItem = shortcut
         let permission = NSMenuItem(title: "Enable Global Shortcut…", action: #selector(requestPermission), keyEquivalent: "")
         permission.target = self
         menu.addItem(permission)
@@ -141,7 +150,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         window.isOpaque = false
         window.backgroundColor = .clear
         window.hasShadow = false
-        window.alphaValue = 0.94
+        window.alphaValue = 1
         window.isReleasedWhenClosed = false
         window.delegate = self
         let backdrop = ShadowBackdropView(frame: frame)
@@ -191,7 +200,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
               let visible = (screen ?? panel.screen ?? NSScreen.main)?.visibleFrame else { return }
         let layout = OverlayLayout.resolve(in: visible, preferences: settings.value)
         panel.setFrame(layout.frame, display: true)
-        panel.alphaValue = settings.value.validated().contentOpacity
+        panel.alphaValue = 1
+        typingView.alphaValue = settings.value.validated().textOpacity
         backdropView.configuration = layout.configuration
         backdropView.palette = settings.palette
         typingView.frame = layout.contentFrame
@@ -256,6 +266,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     func windowWillClose(_ notification: Notification) {
         guard notification.object as? NSWindow === settingsWindow?.window, isEditingAppearance else { return }
+        settings?.isRecordingShortcut = false
         let screen = settingsPreviewScreen
         isEditingAppearance = false
         settingsPreviewScreen = nil
@@ -279,13 +290,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     private func refreshGlobalMonitor() {
+        let needsModifierMonitor = settings?.value.shortcut.keyCode == nil
         let trusted = AXIsProcessTrusted()
-        permissionItem?.isHidden = trusted
-        if trusted, globalMonitor == nil {
+        permissionItem?.isHidden = trusted || !needsModifierMonitor
+        if trusted, needsModifierMonitor, globalMonitor == nil {
             globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.flagsChanged, .keyDown]) { [weak self] event in
                 MainActor.assumeIsolated { self?.observe(event) }
             }
-        } else if !trusted, let monitor = globalMonitor {
+        } else if (!trusted || !needsModifierMonitor), let monitor = globalMonitor {
             NSEvent.removeMonitor(monitor)
             globalMonitor = nil
             gesture.reset()
@@ -293,13 +305,39 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     private func observe(_ event: NSEvent) {
+        guard settings?.isRecordingShortcut != true, settings?.value.shortcut.keyCode == nil else { return }
         if event.type == .keyDown { gesture.keyPressed(); return }
-        var flags: ShortcutModifiers = []
-        for (native, value) in [(NSEvent.ModifierFlags.control, ShortcutModifiers.control),
-                                 (.option, .option), (.command, .command), (.shift, .shift), (.function, .function)] {
-            if event.modifierFlags.contains(native) { flags.insert(value) }
-        }
+        let flags = ShortcutModifiers(eventFlags: event.modifierFlags)
         if gesture.flagsChanged(flags) { toggleOverlay() }
+    }
+
+    private func synchronizeShortcut(force: Bool = false) {
+        guard shortcutMonitoringEnabled, let settings else { return }
+        let shortcut = settings.value.shortcut.validated()
+        guard force || shortcut != appliedShortcut else { return }
+        appliedShortcut = shortcut
+        hotKey.unregister()
+        gesture = ShortcutGesture(required: shortcut.modifiers)
+        shortcutItem?.title = "Toggle: \(shortcut.displayName)" + (shortcut.keyCode == nil ? " (press and release)" : "")
+        if !settings.isRecordingShortcut, shortcut.keyCode != nil {
+            let result = hotKey.register(shortcut, onPress: { [weak self] in self?.toggleOverlay() })
+            settings.shortcutError = result == 0 ? nil : "This shortcut is unavailable. Choose another combination."
+        }
+        refreshGlobalMonitor()
+    }
+
+    private func validateShortcut(_ candidate: OverlayShortcut) -> String? {
+        guard shortcutMonitoringEnabled else { return nil }
+        hotKey.unregister()
+        if candidate.keyCode != nil {
+            let result = hotKey.register(candidate, onPress: { [weak self] in self?.toggleOverlay() })
+            if result != 0 {
+                synchronizeShortcut(force: true)
+                return "This shortcut is unavailable. Choose another combination."
+            }
+        }
+        appliedShortcut = nil
+        return nil
     }
 
     @objc private func requestPermission() {
@@ -313,6 +351,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     @objc private func quit() { NSApplication.shared.terminate(nil) }
 
     func applicationWillTerminate(_ notification: Notification) {
+        settings?.isRecordingShortcut = false
+        hotKey.invalidate()
         updateTimer?.invalidate()
         permissionTimer?.invalidate()
         if let globalMonitor { NSEvent.removeMonitor(globalMonitor) }

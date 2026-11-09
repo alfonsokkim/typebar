@@ -42,8 +42,44 @@ public struct OverlayPreferences: Codable, Equatable, Sendable {
     public var horizontalPosition: Double = 0.5
     public var verticalPosition: Double = 0
     public var backgroundOpacity: Double = 0.62
-    public var contentOpacity: Double = 0.94
+    public var textOpacity: Double = 0.94
+    public var shortcut = OverlayShortcut.default
     public init() {}
+
+    private enum CodingKeys: String, CodingKey {
+        case themeID, customTheme, cornerRadius, blurRadius, scale, horizontalPosition, verticalPosition
+        case backgroundOpacity, textOpacity, contentOpacity, shortcut
+    }
+
+    public init(from decoder: any Decoder) throws {
+        self.init()
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        themeID = try values.decodeIfPresent(String.self, forKey: .themeID) ?? themeID
+        customTheme = try values.decodeIfPresent(ThemePalette.self, forKey: .customTheme) ?? customTheme
+        cornerRadius = try values.decodeIfPresent(Double.self, forKey: .cornerRadius) ?? cornerRadius
+        blurRadius = try values.decodeIfPresent(Double.self, forKey: .blurRadius) ?? blurRadius
+        scale = try values.decodeIfPresent(Double.self, forKey: .scale) ?? scale
+        horizontalPosition = try values.decodeIfPresent(Double.self, forKey: .horizontalPosition) ?? horizontalPosition
+        verticalPosition = try values.decodeIfPresent(Double.self, forKey: .verticalPosition) ?? verticalPosition
+        backgroundOpacity = try values.decodeIfPresent(Double.self, forKey: .backgroundOpacity) ?? backgroundOpacity
+        textOpacity = try values.decodeIfPresent(Double.self, forKey: .textOpacity)
+            ?? values.decodeIfPresent(Double.self, forKey: .contentOpacity) ?? textOpacity
+        shortcut = try values.decodeIfPresent(OverlayShortcut.self, forKey: .shortcut) ?? shortcut
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        var values = encoder.container(keyedBy: CodingKeys.self)
+        try values.encode(themeID, forKey: .themeID)
+        try values.encode(customTheme, forKey: .customTheme)
+        try values.encode(cornerRadius, forKey: .cornerRadius)
+        try values.encode(blurRadius, forKey: .blurRadius)
+        try values.encode(scale, forKey: .scale)
+        try values.encode(horizontalPosition, forKey: .horizontalPosition)
+        try values.encode(verticalPosition, forKey: .verticalPosition)
+        try values.encode(backgroundOpacity, forKey: .backgroundOpacity)
+        try values.encode(textOpacity, forKey: .textOpacity)
+        try values.encode(shortcut, forKey: .shortcut)
+    }
 
     public func validated() -> Self {
         var result = self
@@ -55,9 +91,10 @@ public struct OverlayPreferences: Codable, Equatable, Sendable {
         result.scale = clamp(scale, 0.6...1.4, fallback: 1)
         result.horizontalPosition = clamp(horizontalPosition, 0...1, fallback: 0.5)
         result.verticalPosition = clamp(verticalPosition, 0...1, fallback: 0)
-        result.backgroundOpacity = clamp(backgroundOpacity, 0.2...1, fallback: 0.62)
-        result.contentOpacity = clamp(contentOpacity, 0.4...1, fallback: 0.94)
+        result.backgroundOpacity = clamp(backgroundOpacity, 0...1, fallback: 0.62)
+        result.textOpacity = clamp(textOpacity, 0...1, fallback: 0.94)
         result.customTheme = customTheme.validated()
+        result.shortcut = shortcut.validated()
         return result
     }
 }

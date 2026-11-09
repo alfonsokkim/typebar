@@ -32,9 +32,10 @@ enum PreviewCapture {
                            width: layout.frame.width, height: layout.frame.height)
         let overlay = ShadowBackdropView(frame: frame)
         overlay.configuration = layout.configuration
-        overlay.alphaValue = layout.configuration.contentOpacity
+        overlay.alphaValue = 1
         let view = TypingView(frame: layout.contentFrame, vocabulary: try EnglishWords.load())
         view.bounds = layout.contentBounds
+        view.alphaValue = layout.configuration.textOpacity
         view.session = TypingSession(vocabulary: try EnglishWords.load(), seed: 42)
         overlay.addSubview(view)
         canvas.addSubview(overlay)
@@ -62,8 +63,9 @@ enum PreviewCapture {
             let overlay = ShadowBackdropView(frame: NSRect(x: 12, y: 12, width: 980 + padding * 2,
                                                             height: ShadowBackdropView.contentHeight + padding * 2))
             overlay.appearance = NSAppearance(named: .darkAqua)
-            overlay.alphaValue = 0.94
+            overlay.alphaValue = 1
             let view = TypingView(frame: overlay.bounds.insetBy(dx: padding, dy: padding), vocabulary: vocabulary)
+            view.alphaValue = 0.94
             view.session = TypingSession(vocabulary: vocabulary, seed: 42)
             if typing {
                 let now = ProcessInfo.processInfo.systemUptime

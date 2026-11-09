@@ -1,6 +1,6 @@
 # Typebar
 
-A small typing-practice overlay for macOS. Press and release **Control + Option + Command** to bring up two ten-word lines near the top of your screen, then keep typing for as long as you like.
+A small typing-practice overlay for macOS. Press and release **Control + Option + Command** to bring up two ten-word lines near the top of your screen, then keep typing for as long as you like. The shortcut can be changed in Settings.
 
 [Download for Mac](https://akwas.vercel.app/downloads/typebar/Typebar-mac.zip) · [Releases](https://github.com/alfonsokkim/typebar/releases) · [akwas](https://akwas.vercel.app)
 
@@ -8,7 +8,7 @@ A small typing-practice overlay for macOS. Press and release **Control + Option 
 
 ## What it does
 
-- Uses Monkeytype's English 200 word list, bundled for offline practice.
+- Uses Monkeytype's English 200 word list, bundled for offline practice. The word “I” accepts both `I` and `i`.
 - Replaces each completed ten-word line with another. There is no test timer or finish screen.
 - Shows live WPM and accuracy, with theme colours for correct letters, mistakes, and the caret.
 - Resets WPM after more than **five seconds without typing**. The next keystroke starts a fresh speed measurement while keeping your words and position.
@@ -29,7 +29,7 @@ Requires **macOS 14 or later**. The download is a universal app containing Apple
 1. [Download Typebar-mac.zip](https://akwas.vercel.app/downloads/typebar/Typebar-mac.zip) and unzip it.
 2. Drag **Typebar.app** into **Applications**, then open it.
 3. If macOS blocks the first launch, open **System Settings → Privacy & Security**, choose **Open Anyway** for Typebar, and confirm. This build is locally signed and is not notarized by Apple.
-4. Enable **Typebar** under **System Settings → Privacy & Security → Accessibility** so its global shortcut works. The menu-bar button also opens the overlay.
+4. Enable **Typebar** under **System Settings → Privacy & Security → Accessibility** for modifier-only shortcuts such as the default. Shortcuts containing a regular key use macOS global hotkeys. The menu-bar button also opens the overlay.
 
 To launch it when you sign in, add Typebar under **System Settings → General → Login Items**. It does not enable this automatically.
 
@@ -37,7 +37,7 @@ To launch it when you sign in, add Typebar under **System Settings → General �
 
 | Key | Action |
 | --- | --- |
-| **Control + Option + Command**, then release | Show or hide |
+| **Control + Option + Command**, then release | Show or hide (default, configurable in Settings) |
 | **Space** | Move to the next word |
 | **Backspace** | Correct a character or return to the previous word in the current line |
 | **Option + Backspace** | Clear the current word |
@@ -46,7 +46,7 @@ To launch it when you sign in, add Typebar under **System Settings → General �
 | **Command + ,** | Open settings |
 | **Command + Q** | Quit |
 
-Clicking another app hides and pauses the overlay. Adding another key to the three-modifier shortcut cancels the toggle so existing shortcuts can keep working. Secure Input in another app can prevent global shortcut detection; use the menu-bar icon in that case.
+Clicking another app hides and pauses the overlay. Adding another key to the three-modifier shortcut cancels the toggle so existing shortcuts can keep working. Secure Input in another app can prevent modifier-only shortcut detection; use the menu-bar icon in that case.
 
 ## Appearance and position
 
@@ -56,10 +56,18 @@ Click the **gear** in the overlay, choose **Settings…** from the a│ menu, or
 - **Size:** scale the whole overlay from 60% to 140%, including its text and controls.
 - **Corner radius:** choose square corners or increasingly rounded corners, from 0 to 120 points.
 - **Edge blur:** 0 gives a hard edge with no diffusion. Increase it up to 60 points for a wide, soft fade. This softens the overlay's edges rather than blurring the words.
-- **Opacity:** adjust the background separately from the overall overlay.
+- **Opacity:** adjust **Background opacity** and **Text opacity** independently, from 0% to 100%. Text opacity includes the words, caret, WPM, and overlay controls.
 - **Position:** choose one of nine placements, or use the horizontal and vertical sliders. Placement is relative to the display under your pointer when you open the overlay.
 
 Settings open centred in the space between the overlay and the bottom of the display, with the actual overlay staying visible at its configured position. Changes update it immediately while the typing clock is paused. Settings save automatically on this Mac. **Done** closes settings and returns keyboard focus to the overlay without clearing your practice. **Reset Defaults** restores Shadow and the original layout. On smaller displays, Typebar reduces the effective size or blur as needed to keep the complete overlay on-screen.
+
+## Change the shortcut
+
+In Settings, click the current shortcut under **Shortcut**, press the combination you want, and release its keys to save it. Escape cancels recording. **Reset** beside the shortcut restores Control + Option + Command.
+
+You can use Control, Option, or Command alone or together, optionally with Shift, or combine them with a regular key. Function keys such as F6 also work. Fn and Globe by themselves are not supported. If macOS cannot register a combination, Typebar keeps the previous shortcut and shows an error.
+
+Modifier-only shortcuts toggle when you release all their modifiers, provided no other key was pressed. Shortcuts with a regular key use macOS's global hotkey registration and toggle once per press. Their registration is suspended while recording a replacement, and restored if recording is cancelled. The menu bar shows your saved shortcut.
 
 ## WPM and accuracy
 
@@ -69,7 +77,7 @@ The clock starts on your first keystroke. Short pauses while the overlay is visi
 
 ## Privacy
 
-Typebar has no accounts, analytics, servers, or runtime network requests. It saves appearance preferences locally, but does not save what you type. The global shortcut monitor checks modifier changes and whether an extra key was pressed during the chord; it does not save or transmit keys typed in other apps. Practice input is handled only while the overlay has keyboard focus.
+Typebar has no accounts, analytics, servers, or runtime network requests. It saves appearance preferences and the chosen shortcut locally, but does not save what you type. The global shortcut monitor checks modifier changes and whether an extra key was pressed during the chord; it does not save or transmit keys typed in other apps. Practice input is handled only while the overlay has keyboard focus. Shortcut recording captures keys only in the focused settings window while the recorder is active.
 
 ## Build
 

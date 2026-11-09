@@ -13,13 +13,14 @@ public struct ShortcutGesture {
     private var armed = false
     private var cancelled = false
     private var modifiersDown = false
-    public init() {}
+    private let required: ShortcutModifiers
+    public init(required: ShortcutModifiers = .required) { self.required = required }
 
     public mutating func flagsChanged(_ flags: ShortcutModifiers) -> Bool {
-        modifiersDown = !flags.intersection(.required).isEmpty
-        if flags == .required, !armed { armed = true }
-        if modifiersDown, !flags.subtracting(.required).isEmpty { cancelled = true }
-        if flags.intersection(.required).isEmpty {
+        modifiersDown = !flags.intersection(required).isEmpty
+        if flags == required, !armed { armed = true }
+        if modifiersDown, !flags.subtracting(required).isEmpty { cancelled = true }
+        if flags.intersection(required).isEmpty {
             let shouldToggle = armed && !cancelled
             armed = false
             cancelled = false

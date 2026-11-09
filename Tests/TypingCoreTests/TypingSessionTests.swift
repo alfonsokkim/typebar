@@ -199,3 +199,22 @@ import Testing
         #expect(toggles == 1)
     }
 }
+
+
+@Test(arguments: ["I", "i"])
+func firstPersonPronounAcceptsEitherCase(input: String) {
+    var session = TypingSession(vocabulary: ["I"], seed: 1)
+    for character in input { session.type(character, at: 0) }
+    #expect(session.words[0].isCorrect)
+    #expect(session.words[0].matchesInput(Character(input), expected: "I"))
+    #expect(session.accuracy == 100 && session.wpm(at: 2) == 6)
+    session.type(" ", at: 2)
+    #expect(session.completedWords == 1 && session.words[0].isCorrect)
+    #expect(session.accuracy == 100 && session.wpm(at: 2) == 12)
+    session.backspace(at: 3)
+    #expect(session.wpm(at: 3) == 4)
+    session.backspace(at: 3)
+    #expect(session.wpm(at: 3) == 0)
+    #expect(!PracticeWord(target: "Ice", input: "ice").isCorrect)
+    #expect(!PracticeWord(target: "I", input: "ii").isCorrect)
+}
