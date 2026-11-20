@@ -28,7 +28,7 @@ Requires **macOS 14 or later**. The download is a universal app containing Apple
 
 1. [Download Typebar-mac.zip](https://akwas.vercel.app/downloads/typebar/Typebar-mac.zip) and unzip it.
 2. Drag **Typebar.app** into **Applications**, then open it.
-3. If macOS blocks the first launch, open **System Settings → Privacy & Security**, choose **Open Anyway** for Typebar, and confirm. This build is locally signed and is not notarized by Apple.
+3. Confirm **Open** if macOS asks whether you want to open an app downloaded from the internet. Official downloads from version **1.3.1** are signed with Developer ID and notarized by Apple.
 4. Enable **Typebar** under **System Settings → Privacy & Security → Accessibility** for modifier-only shortcuts such as the default. Shortcuts containing a regular key use macOS global hotkeys. The menu-bar button also opens the overlay.
 
 To launch it when you sign in, add Typebar under **System Settings → General → Login Items**. It does not enable this automatically.
